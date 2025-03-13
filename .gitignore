@@ -1,0 +1,9 @@
+# Python virsual environment 
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+
+# ignore eval.py
+eval.py
