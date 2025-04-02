@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import copy
 import random
 import math
+from MCTS import TD_MCTS, TD_MCTS_Node
+from N_tupleTD import NTupleApproximator
 
 
 class Game2048Env(gym.Env):
@@ -231,10 +233,60 @@ class Game2048Env(gym.Env):
         # If the simulated board is different from the current board, the move is legal
         return not np.array_equal(self.board, temp_board)
 
+
 def get_action(state, score):
+    from N_tupleTD import NTupleApproximator  # local import to avoid circular import
+
+    # Recreate environment and set its state
+    env = Game2048Env()
+    env.board = state.copy()
+    env.score = score
+
+    # Define the same patterns used in training
+    patterns = [
+        [(0, 0), (1, 0), (2, 0), (3, 0)],
+        [(1, 0), (1, 1), (1, 2), (1, 3)],
+        [(2, 0), (3, 0), (2, 1), (3, 1)],
+        [(1, 0), (2, 0), (1, 1), (2, 1)],
+        [(1, 1), (2, 1), (1, 2), (2, 2)],
+
+        # 6-tuples from image
+        [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],
+        [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],
+        [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],
+        [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],
+    ]
+
+    # Load approximator and weights
+    approximator = NTupleApproximator(board_size=4, patterns=patterns)
+    with open("weights.pkl", "rb") as f:
+        approximator.weights = pickle.load(f)
+
+    # Find best legal move using greedy afterstate value
+    legal_moves = [a for a in range(4) if env.is_move_legal(a)]
+    best_val = -float("inf")
+    best_action = None
+
+    for a in legal_moves:
+        env_copy = copy.deepcopy(env)
+        env_copy.step(a)
+        val = approximator.value(env_copy.board)
+        if val > best_val:
+            best_val = val
+            best_action = a
+
+    return best_action if best_action is not None else random.choice([0, 1, 2, 3])
+
+
+    
+
+'''
+def get_action(state, score):
+    
     env = Game2048Env()
     return random.choice([0, 1, 2, 3]) # Choose a random action
     
-    # You can submit this random agent to evaluate the performance of a purely random strategy.
+    # You can submit this random agent to evaluate the performance of a purely random strategy.'
+'''
 
 
