@@ -234,38 +234,36 @@ class Game2048Env(gym.Env):
 
 
 def get_action(state, score):
-    from N_tupleTD import NTupleApproximator  # local import to avoid circular import
 
-    # Recreate environment and set its state
     env = Game2048Env()
     env.board = state.copy()
     env.score = score
 
-    # Define the same patterns used in training
     patterns = [
-        [(0, 0), (1, 0), (2, 0), (3, 0)],
-        [(1, 0), (1, 1), (1, 2), (1, 3)],
-        [(2, 0), (3, 0), (2, 1), (3, 1)],
-        [(1, 0), (2, 0), (1, 1), (2, 1)],
-        [(1, 1), (2, 1), (1, 2), (2, 2)],
+        # === Original 4-tuples ===
+        [(0, 0), (1, 0), (2, 0), (3, 0)],  # Vertical line
+        [(1, 0), (1, 1), (1, 2), (1, 3)],  # Horizontal line
+        [(2, 0), (3, 0), (2, 1), (3, 1)],  # 2x2 bottom-left square
+        [(1, 0), (2, 0), (1, 1), (2, 1)],  # 2x2 center-left square
+        [(1, 1), (2, 1), (1, 2), (2, 2)],  # 2x2 center square
 
-        # 6-tuples from image
-        [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],
-        [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],
-        [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],
-        [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],
+        # === New 6-tuples from image ===
+        [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],  # Red box (left 2x3)
+        [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],  # Blue box (center 2x3)
+        [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],  # Green Z-ish
+        [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],  # Purple backward Z
     ]
 
-    # Load approximator and weights
     approximator = NTupleApproximator(board_size=4, patterns=patterns)
+
     with open("weights.pkl", "rb") as f:
         approximator.weights = pickle.load(f)
 
-    # Find best legal move using greedy afterstate value
     legal_moves = [a for a in range(4) if env.is_move_legal(a)]
+
+    # Use your N-Tuple approximator to play 2048
     best_val = -float("inf")
     best_action = None
-
     for a in legal_moves:
         env_copy = copy.deepcopy(env)
         env_copy.step(a)
@@ -274,10 +272,7 @@ def get_action(state, score):
             best_val = val
             best_action = a
 
-    return best_action if best_action is not None else random.choice([0, 1, 2, 3])
-
-
-    
+    return best_action
 
 '''
 def get_action(state, score):
