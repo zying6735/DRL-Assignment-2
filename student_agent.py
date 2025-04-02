@@ -10,6 +10,25 @@ import random
 import math
 from N_tupleTD import NTupleApproximator
 
+patterns = [
+    # === Original 4-tuples ===
+    [(0, 0), (1, 0), (2, 0), (3, 0)],  # Vertical line
+    [(1, 0), (1, 1), (1, 2), (1, 3)],  # Horizontal line
+    [(2, 0), (3, 0), (2, 1), (3, 1)],  # 2x2 bottom-left square
+    [(1, 0), (2, 0), (1, 1), (2, 1)],  # 2x2 center-left square
+    [(1, 1), (2, 1), (1, 2), (2, 2)],  # 2x2 center square
+
+    # === New 6-tuples from image ===
+    [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],  # Red box (left 2x3)
+    [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],  # Blue box (center 2x3)
+    [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],  # Green Z-ish
+    [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],  # Purple backward Z
+]
+approximator = NTupleApproximator(board_size=4, patterns=patterns)
+
+with open("weights.pkl", "rb") as f:
+    approximator.weights = pickle.load(f)
+
 
 class Game2048Env(gym.Env):
     def __init__(self):
@@ -238,26 +257,6 @@ def get_action(state, score):
     env = Game2048Env()
     env.board = state.copy()
     env.score = score
-
-    patterns = [
-        # === Original 4-tuples ===
-        [(0, 0), (1, 0), (2, 0), (3, 0)],  # Vertical line
-        [(1, 0), (1, 1), (1, 2), (1, 3)],  # Horizontal line
-        [(2, 0), (3, 0), (2, 1), (3, 1)],  # 2x2 bottom-left square
-        [(1, 0), (2, 0), (1, 1), (2, 1)],  # 2x2 center-left square
-        [(1, 1), (2, 1), (1, 2), (2, 2)],  # 2x2 center square
-
-        # === New 6-tuples from image ===
-        [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],  # Red box (left 2x3)
-        [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],  # Blue box (center 2x3)
-        [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],  # Green Z-ish
-        [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],  # Purple backward Z
-    ]
-
-    approximator = NTupleApproximator(board_size=4, patterns=patterns)
-
-    with open("weights.pkl", "rb") as f:
-        approximator.weights = pickle.load(f)
 
     legal_moves = [a for a in range(4) if env.is_move_legal(a)]
 
