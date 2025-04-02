@@ -27,9 +27,13 @@ jobs:
       run: |
         pip install gym
         pip install -r requirements.txt
+        pip install gdown  # ⬅️ 加這行來安裝 gdown
 
-    - name: 3. Ensure env.so is executable
+    - name: 3. Download weights.pkl from Google Drive
+      run: gdown 'https://drive.google.com/uc?id=1BKwKchkkplyB7bp_Oym7Pxm640ThLciA&export=download'
+
+    - name: 4. Ensure env.so is executable
       run: chmod +x env.cpython-38-x86_64-linux-gnu.so
 
-    - name: 4. Run Evaluation
+    - name: 5. Run Evaluation
       run: python eval.py --token a91aae52cff9ef65932db06b150ffd47
