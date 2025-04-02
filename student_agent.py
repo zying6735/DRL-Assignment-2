@@ -10,6 +10,7 @@ import random
 import math
 from N_tupleTD import NTupleApproximator
 
+'''
 patterns = [
     # === Original 4-tuples ===
     [(0, 0), (1, 0), (2, 0), (3, 0)],  # Vertical line
@@ -28,6 +29,7 @@ approximator = NTupleApproximator(board_size=4, patterns=patterns)
 
 with open("weights.pkl", "rb") as f:
     approximator.weights = pickle.load(f)
+'''
 
 
 class Game2048Env(gym.Env):
