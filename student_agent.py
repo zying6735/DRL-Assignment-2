@@ -308,47 +308,54 @@ class Game2048Env(gym.Env):
         # If the simulated board is different from the current board, the move is legal
         return not np.array_equal(self.board, temp_board)
 
-# ==========================
-# Agent Action
-# ==========================
+# === Global Approximator Loader ===
+approximator = None
 
-def get_action(state, score):
+def init_approximator():
     global approximator
-    patterns = [
-        [(0, 0), (1, 0), (2, 0), (3, 0)],
-        [(1, 0), (1, 1), (1, 2), (1, 3)],
-        [(2, 0), (3, 0), (2, 1), (3, 1)],
-        [(1, 0), (2, 0), (1, 1), (2, 1)],
-        [(1, 1), (2, 1), (1, 2), (2, 2)],
-        [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],
-        [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],
-        [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],
-        [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],
-    ]
-    approximator = NTupleApproximator(board_size=4, patterns=patterns)
+    if approximator is None:
+        patterns = [
+            [(0, 0), (1, 0), (2, 0), (3, 0)],
+            [(1, 0), (1, 1), (1, 2), (1, 3)],
+            [(2, 0), (3, 0), (2, 1), (3, 1)],
+            [(1, 0), (2, 0), (1, 1), (2, 1)],
+            [(1, 1), (2, 1), (1, 2), (2, 2)],
+            [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],
+            [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],
+            [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],
+            [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],
+        ]
+        approximator = NTupleApproximator(board_size=4, patterns=patterns)
+        if os.path.exists("weights.pkl"):
+            try:
+                with open("weights.pkl", "rb") as f:
+                    raw_weights = pickle.load(f)
+                    approximator.weights = [defaultdict(float, w) for w in raw_weights]
+            except Exception as e:
+                print("⚠️ Failed to load weights:", e)
+        else:
+            print("⚠️ weights.pkl not found. Make sure to train the model first.")
 
-    if os.path.exists("weights.pkl"):
-        with open("weights.pkl", "rb") as f:
-            approximator.weights = pickle.load(f)
-        print("✅ Weights loaded.")
-    else:
-        print("❌ No saved model found. Please train first.")
-        return
-
+# === Main Agent Function ===
+def get_action(state, score):
+    init_approximator()
     env = Game2048Env()
     env.board = state.copy()
     env.score = score
-    previous_score = env.score
+
     legal_moves = [a for a in range(4) if env.is_move_legal(a)]
-    best_value = -float('inf')
+    best_val = -float("inf")
     best_action = None
+
     for a in legal_moves:
         afterstate_board, score_after, moved = step_Ntuple(env, a)
         if not moved:
             continue
-        reward_estimated = score_after - previous_score
-        val_est = reward_estimated + approximator.value(afterstate_board)
-        if val_est > best_value:
-            best_value = val_est
+        reward = score_after - env.score
+        val = reward + approximator.value(afterstate_board)
+        if val > best_val:
+            best_val = val
             best_action = a
+
     return best_action
+
