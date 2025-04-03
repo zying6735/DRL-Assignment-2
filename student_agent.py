@@ -328,17 +328,15 @@ def init_approximator():
 
         approximator = NTupleApproximator(board_size=4, patterns=patterns)
 
-        if os.path.exists("weights_safe.npz"):
+        if os.path.exists("weights.pkl"):
             try:
-                data = np.load("weights_safe.npz", allow_pickle=True)
-                approximator.weights = [
-                    defaultdict(float, data[key].item()) for key in data.files
-                ]
-                print("✅ Loaded weights_safe.npz successfully.")
+                with open("weights.pkl", "rb") as f:
+                    raw_weights = pickle.load(f)
+                    approximator.weights = [defaultdict(float, w) for w in raw_weights]
             except Exception as e:
-                print(f"⚠️ Failed to load safe weights: {e}")
-        else:
-            print("❌ weights_safe.npz not found.")
+                print(e)
+
+
 
 # === Main Agent Function ===
 def get_action(state, score):
