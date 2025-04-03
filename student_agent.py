@@ -313,6 +313,28 @@ class Game2048Env(gym.Env):
 # ==========================
 
 def get_action(state, score):
+    global approximator
+    patterns = [
+        [(0, 0), (1, 0), (2, 0), (3, 0)],
+        [(1, 0), (1, 1), (1, 2), (1, 3)],
+        [(2, 0), (3, 0), (2, 1), (3, 1)],
+        [(1, 0), (2, 0), (1, 1), (2, 1)],
+        [(1, 1), (2, 1), (1, 2), (2, 2)],
+        [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],
+        [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],
+        [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],
+        [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],
+    ]
+    approximator = NTupleApproximator(board_size=4, patterns=patterns)
+
+    if os.path.exists("weights.pkl"):
+        with open("weights.pkl", "rb") as f:
+            approximator.weights = pickle.load(f)
+        print("✅ Weights loaded.")
+    else:
+        print("❌ No saved model found. Please train first.")
+        return
+
     env = Game2048Env()
     env.board = state.copy()
     env.score = score
