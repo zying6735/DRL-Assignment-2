@@ -27,8 +27,7 @@ jobs:
       run: |
         pip install gym
         pip install -r requirements.txt
-        pip install numpy==2.2.4  # ✅ 安裝跟你本地一樣版本的 numpy
-        pip install gdown         # ✅ 確保能下載 weights
+        pip install gdown   
 
     - name: 3. Download weights.pkl from Google Drive
       run: gdown 'https://drive.google.com/uc?id=1BKwKchkkplyB7bp_Oym7Pxm640ThLciA&export=download' -O weights.pkl
