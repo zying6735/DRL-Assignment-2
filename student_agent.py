@@ -332,9 +332,7 @@ def init_approximator():
                     raw_weights = pickle.load(f)
                     approximator.weights = [defaultdict(float, w) for w in raw_weights]
             except Exception as e:
-                print("⚠️ Failed to load weights:", e)
-        else:
-            print("⚠️ weights.pkl not found. Make sure to train the model first.")
+                print(e)
 
 # === Main Agent Function ===
 def get_action(state, score):
