@@ -29,7 +29,7 @@ jobs:
         pip install -r requirements.txt
         pip install gdown  # ⬅️ 加這行來安裝 gdown
 
-    - name: 3. Download weights.pkl from Google Drive
+    - name: 3. Download weights.npz from Google Drive
       run: gdown 'https://drive.google.com/uc?id=1LCLqm7ARrWIZGOCJGe27mrg_TNffsHQZ&export=download'
       
 
