@@ -6,30 +6,64 @@ import gym
 from gym import spaces
 import matplotlib.pyplot as plt
 import copy
-import random
 import math
-from N_tupleTD import NTupleApproximator
+import os
+from collections import defaultdict
 
-'''
-patterns = [
-    # === Original 4-tuples ===
-    [(0, 0), (1, 0), (2, 0), (3, 0)],  # Vertical line
-    [(1, 0), (1, 1), (1, 2), (1, 3)],  # Horizontal line
-    [(2, 0), (3, 0), (2, 1), (3, 1)],  # 2x2 bottom-left square
-    [(1, 0), (2, 0), (1, 1), (2, 1)],  # 2x2 center-left square
-    [(1, 1), (2, 1), (1, 2), (2, 2)],  # 2x2 center square
+# ==========================
+# N-Tuple Approximator
+# ==========================
 
-    # === New 6-tuples from image ===
-    [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],  # Red box (left 2x3)
-    [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],  # Blue box (center 2x3)
-    [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],  # Green Z-ish
-    [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],  # Purple backward Z
-]
-approximator = NTupleApproximator(board_size=4, patterns=patterns)
+def rot90(pattern):
+    return [(y, 3 - x) for x, y in pattern]
 
-with open("weights.pkl", "rb") as f:
-    approximator.weights = pickle.load(f)
-'''
+def rot180(pattern):
+    return [(3 - x, 3 - y) for x, y in pattern]
+
+def rot270(pattern):
+    return [(3 - y, x) for x, y in pattern]
+
+def flip_horizontal(pattern):
+    return [(x, 3 - y) for x, y in pattern]
+
+class NTupleApproximator:
+    def __init__(self, board_size, patterns):
+        self.board_size = board_size
+        self.patterns = patterns
+        self.weights = [defaultdict(float) for _ in patterns]
+        self.symmetry_patterns = []
+        for pattern in self.patterns:
+            syms = self.generate_symmetries(pattern)
+            self.symmetry_patterns.append(syms)
+
+    def generate_symmetries(self, pattern):
+        syms = []
+        seen = set()
+        transforms = [lambda x: x, rot90, rot180, rot270]
+        for t in transforms:
+            rotated = t(pattern)
+            for p in [rotated, flip_horizontal(rotated)]:
+                p_tuple = tuple(p)
+                if p_tuple not in seen:
+                    seen.add(p_tuple)
+                    syms.append(p)
+        return syms
+
+    def tile_to_index(self, tile):
+        return 0 if tile == 0 else int(math.log(tile, 2))
+
+    def get_feature(self, board, coords):
+        return tuple(self.tile_to_index(board[x, y]) for x, y in coords)
+
+    def value(self, board):
+        total_value = 0.0
+        for weight_dict, sym_group in zip(self.weights, self.symmetry_patterns):
+            group_value = 0.0
+            for pattern in sym_group:
+                feature = self.get_feature(board, pattern)
+                group_value += weight_dict[feature]
+            total_value += group_value / len(sym_group)
+        return total_value
 
 
 class Game2048Env(gym.Env):
@@ -253,35 +287,47 @@ class Game2048Env(gym.Env):
         # If the simulated board is different from the current board, the move is legal
         return not np.array_equal(self.board, temp_board)
 
-'''
-def get_action(state, score):
+# ==========================
+# Agent Action
+# ==========================
 
+def get_action(state, score):
+    global approximator
+    patterns = [
+        [(0, 0), (1, 0), (2, 0), (3, 0)],
+        [(1, 0), (1, 1), (1, 2), (1, 3)],
+        [(2, 0), (3, 0), (2, 1), (3, 1)],
+        [(1, 0), (2, 0), (1, 1), (2, 1)],
+        [(1, 1), (2, 1), (1, 2), (2, 2)],
+        [(1, 0), (2, 0), (3, 0), (1, 1), (2, 1), (3, 1)],
+        [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2), (3, 2)],
+        [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],
+        [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],
+    ]
+
+    approximator = NTupleApproximator(board_size=4, patterns=patterns)
+
+    if os.path.exists("weights.pkl"):
+        with open("weights.pkl", "rb") as f:
+            approximator.weights = pickle.load(f)
+    else:
+        return
+    
     env = Game2048Env()
     env.board = state.copy()
     env.score = score
-
+    previous_score = env.score
     legal_moves = [a for a in range(4) if env.is_move_legal(a)]
-
-    # Use your N-Tuple approximator to play 2048
-    best_val = -float("inf")
+    best_value = -float('inf')
     best_action = None
     for a in legal_moves:
-        env_copy = copy.deepcopy(env)
-        env_copy.step(a)
-        val = approximator.value(env_copy.board)
-        if val > best_val:
-            best_val = val
+        afterstate_board, score_after, moved = step_Ntuple(env, a)
+        if not moved:
+            continue
+        reward_estimated = score_after - previous_score
+        val_est = reward_estimated + approximator.value(afterstate_board)
+        if val_est > best_value:
+            best_value = val_est
             best_action = a
-
     return best_action
-'''
-
-def get_action(state, score):
-    
-    env = Game2048Env()
-    return random.choice([0, 1, 2, 3]) # Choose a random action
-    
-    # You can submit this random agent to evaluate the performance of a purely random strategy.'
-
-
 
