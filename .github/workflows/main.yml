@@ -30,7 +30,7 @@ jobs:
         pip install gdown  # ⬅️ 加這行來安裝 gdown
 
     - name: 3. Download weights.pkl from Google Drive
-      run: gdown 'https://drive.google.com/uc?id=1BKwKchkkplyB7bp_Oym7Pxm640ThLciA&export=download'
+      run: gdown 'https://drive.google.com/uc?id=1BKwKchkkplyB7bp_Oym7Pxm640ThLciA&export=download' -O weights.pkl
 
     - name: 4. Ensure env.so is executable
       run: chmod +x env.cpython-38-x86_64-linux-gnu.so
