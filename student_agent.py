@@ -325,14 +325,20 @@ def init_approximator():
             [(0, 0), (1, 0), (2, 0), (2, 1), (3, 0), (3, 1)],
             [(0, 1), (1, 1), (2, 1), (2, 2), (3, 1), (3, 2)],
         ]
+
         approximator = NTupleApproximator(board_size=4, patterns=patterns)
-        if os.path.exists("weights.pkl"):
+
+        if os.path.exists("weights_safe.npz"):
             try:
-                with open("weights.pkl", "rb") as f:
-                    raw_weights = pickle.load(f)
-                    approximator.weights = [defaultdict(float, w) for w in raw_weights]
+                data = np.load("weights_safe.npz", allow_pickle=True)
+                approximator.weights = [
+                    defaultdict(float, data[key].item()) for key in data.files
+                ]
+                print("✅ Loaded weights_safe.npz successfully.")
             except Exception as e:
-                print(e)
+                print(f"⚠️ Failed to load safe weights: {e}")
+        else:
+            print("❌ weights_safe.npz not found.")
 
 # === Main Agent Function ===
 def get_action(state, score):
@@ -357,3 +363,23 @@ def get_action(state, score):
 
     return best_action
 
+def test_agent(num_games=10):
+    print("🧠 Evaluating the agent...")
+    env = Game2048Env()
+    scores = []
+    max_tiles = []
+    for i in range(num_games):
+        state = env.reset()
+        done = False
+        while not done:
+            action = get_action(state, env.score)
+            state, score, done, _ = env.step(action)
+        scores.append(score)
+        max_tiles.append(np.max(state))
+        print(f"Game {i+1} | Score: {score} | Max Tile: {np.max(state)}")
+    print("\n🧠 Evaluation Summary:")
+    print(f"Average Score: {np.mean(scores):.2f}")
+    print(f"Average Max Tile: {np.mean(max_tiles):.2f}")
+    print(f"2048 Reached: {sum(tile >= 2048 for tile in max_tiles)} / {num_games}")
+
+test_agent(num_games=10)
