@@ -343,26 +343,47 @@ def init_approximator():
 
 # === Main Agent Function ===
 def get_action(state, score):
+
     if score == 0 and np.count_nonzero(state) <= 2:
         print("play")
-        
+
     init_approximator()
+
     env = Game2048Env()
     env.board = state.copy()
     env.score = score
-
+    previous_score = env.score
     legal_moves = [a for a in range(4) if env.is_move_legal(a)]
-    best_val = -float("inf")
+    best_value = -float('inf')
     best_action = None
-
     for a in legal_moves:
         afterstate_board, score_after, moved = step_Ntuple(env, a)
         if not moved:
             continue
-        reward = score_after - env.score
-        val = reward + approximator.value(afterstate_board)
-        if val > best_val:
-            best_val = val
+        reward_estimated = score_after - previous_score
+        val_est = reward_estimated + approximator.value(afterstate_board)
+        if val_est > best_value:
+            best_value = val_est
             best_action = a
-
     return best_action
+
+def test_agent(num_games=10):
+    print("🧠 Evaluating the agent...")
+    env = Game2048Env()
+    scores = []
+    max_tiles = []
+    for i in range(num_games):
+        state = env.reset()
+        done = False
+        while not done:
+            action = get_action(state, env.score)
+            state, score, done, _ = env.step(action)
+        scores.append(score)
+        max_tiles.append(np.max(state))
+        print(f"Game {i+1} | Score: {score} | Max Tile: {np.max(state)}")
+    print("\n🧠 Evaluation Summary:")
+    print(f"Average Score: {np.mean(scores):.2f}")
+    print(f"Average Max Tile: {np.mean(max_tiles):.2f}")
+    print(f"2048 Reached: {sum(tile >= 2048 for tile in max_tiles)} / {num_games}")
+
+test_agent(num_games=10)
