@@ -368,24 +368,4 @@ def get_action(state, score):
 
     return best_action
 
-def test_agent(num_games=10):
-    print("🧠 Evaluating the agent...")
-    env = Game2048Env()
-    scores = []
-    max_tiles = []
-    for i in range(num_games):
-        state = env.reset()
-        done = False
-        while not done:
-            action = get_action(state, env.score)
-            state, score, done, _ = env.step(action)
-        scores.append(score)
-        max_tiles.append(np.max(state))
-        print(f"Game {i+1} | Score: {score} | Max Tile: {np.max(state)}")
-    print("\n🧠 Evaluation Summary:")
-    print(f"Average Score: {np.mean(scores):.2f}")
-    print(f"Average Max Tile: {np.mean(max_tiles):.2f}")
-    print(f"2048 Reached: {sum(tile >= 2048 for tile in max_tiles)} / {num_games}")
-
-test_agent(10)
 
