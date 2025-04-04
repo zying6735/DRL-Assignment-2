@@ -344,8 +344,6 @@ def init_approximator():
 # === Main Agent Function ===
 def get_action(state, score):
 
-    print(1)
-
     if score == 0 and np.count_nonzero(state) <= 2:
         print("play")
 
