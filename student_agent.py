@@ -343,7 +343,9 @@ def init_approximator():
 
 # === Main Agent Function ===
 def get_action(state, score):
-    print("play")
+    if score == 0 and np.count_nonzero(state) <= 2:
+        print("play")
+        
     init_approximator()
     env = Game2048Env()
     env.board = state.copy()
