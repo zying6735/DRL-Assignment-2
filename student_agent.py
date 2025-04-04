@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import copy
 import math
 import os
+import gc
 from collections import defaultdict
 
 # ==========================
@@ -314,6 +315,7 @@ approximator = None
 def init_approximator():
     global approximator
     if approximator is None:
+        gc.collect()  # Memory cleanup before allocation
         patterns = [
             [(0, 0), (1, 0), (2, 0), (3, 0)],
             [(1, 0), (1, 1), (1, 2), (1, 3)],
@@ -332,10 +334,11 @@ def init_approximator():
             try:
                 with open("weights.pkl", "rb") as f:
                     raw_weights = pickle.load(f)
+                    # Convert to defaultdict again
                     approximator.weights = [defaultdict(float, w) for w in raw_weights]
             except Exception as e:
-                print(e)
-
+                print(f"[WARN] Failed to load weights.pkl: {e}")
+                approximator = None  # force fallback next time
 
 
 # === Main Agent Function ===
@@ -361,3 +364,27 @@ def get_action(state, score):
 
     return best_action
 
+# ==========================
+# Agent Evaluation
+# ==========================
+
+def test_agent(num_games=10):
+    print("🧠 Evaluating the agent...")
+    env = Game2048Env()
+    scores = []
+    max_tiles = []
+    for i in range(num_games):
+        state = env.reset()
+        done = False
+        while not done:
+            action = get_action(state, env.score)
+            state, score, done, _ = env.step(action)
+        scores.append(score)
+        max_tiles.append(np.max(state))
+        print(f"Game {i+1} | Score: {score} | Max Tile: {np.max(state)}")
+    print("\n🧠 Evaluation Summary:")
+    print(f"Average Score: {np.mean(scores):.2f}")
+    print(f"Average Max Tile: {np.mean(max_tiles):.2f}")
+    print(f"2048 Reached: {sum(tile >= 2048 for tile in max_tiles)} / {num_games}")
+
+test_agent(num_games=10)
