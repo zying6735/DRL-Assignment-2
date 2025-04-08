@@ -132,7 +132,9 @@ class Connect6Game:
         """Parses and executes GTP commands."""
         command = command.strip()
         if command == "get_conf_str env_board_size:":
-            return "env_board_size=19"
+            print("env_board_size=19", flush=True)
+
+            
 
         if not command:
             return
