@@ -15,7 +15,6 @@ class Connect6Game:
         self.turn = 1
         self.game_over = False
         print("= ", flush=True)
-
     def set_board_size(self, size):
         """Sets the board size and resets the game."""
         self.size = size
@@ -23,7 +22,6 @@ class Connect6Game:
         self.turn = 1
         self.game_over = False
         print("= ", flush=True)
-
     def check_win(self):
         """Checks if a player has won.
         Returns:
@@ -114,7 +112,7 @@ class Connect6Game:
 
         print(f"{move_str}\n\n", end='', flush=True)
         print(move_str, file=sys.stderr)
-
+        return
     def show_board(self):
         """Displays the board as text."""
         print("= ")
